@@ -1,21 +1,31 @@
 package com.deebdroid.mobilemileagetracker;
 
+import com.deebdroid.mobilemileagetracker.MyLocation.LocationResult;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class MobilemileagetrackerActivity extends Activity {
 	
 	public static final String SITE_URL = "10.0.1.7.";
+	public static final int SITE_PORT = 8000;
 	private static final String PREFS = "Credentials";	//For local prefs storage
 	private static final int LOGIN_REQ_CODE = 0;		//For exchanging login data from LoginActivity
-	private Context c;
+	public Context c;
+	
+	public MyLocation myLocation;
+	public LocationResult locationResult;
+	public boolean tracking;
 	
 	private SharedPreferences prefs;
 	private SharedPreferences.Editor editor;
@@ -26,6 +36,11 @@ public class MobilemileagetrackerActivity extends Activity {
         setContentView(R.layout.main);
         c = this;
         
+        //Set this true once a trip is started
+        //The location tracking Activity will then receive updates
+        tracking = false;
+        setupLocationReceiver();
+             
         prefs = getSharedPreferences(PREFS, 0);
         editor = prefs.edit();
         
@@ -36,10 +51,57 @@ public class MobilemileagetrackerActivity extends Activity {
         	TextView tv = (TextView)findViewById(R.id.textView);
         	tv.setText("Hello " + prefs.getString("username", "You")+"!");
         }
-        	
-        	
+        
+        //TODO: Create/Set Trip Create/Continue trip button listeners, pass locationResult data to TrackActivity
     }
     
+    private OnClickListener createTripListener = new OnClickListener(){
+    	
+    	public void onClick(View arg){
+    		Intent i = new Intent(c, TrackActivity.class);
+    		startActivityForResult(i, LOGIN_REQ_CODE);
+    	}
+    };
+    
+    
+    private void setupLocationReceiver(){
+    	locationResult = new LocationResult(){
+            @Override
+            public void gotLocation(final Location location){
+            	double acc = location.getAccuracy()/3.2808399;
+            	Toast.makeText(c, "loc +/ "+String.valueOf(acc)+"ft.",Toast.LENGTH_SHORT).show();
+                if(tracking){
+                	//Write logic to send location to Trip recorder Activity thing
+                }
+            }
+    	};
+            
+        myLocation = new MyLocation();
+        myLocation.trackLocation(this, locationResult);
+    }
+    
+    public void onPause(){
+    	super.onPause();
+    	if(tracking == false)
+    		myLocation.stopTracking();
+    }
+    
+    public void onStop(){
+    	super.onStop();
+    	if(tracking == false)
+    		myLocation.stopTracking();
+    }
+    
+    public void onStart(){
+    	super.onStart();
+    	myLocation.trackLocation(this, locationResult);
+    }
+    
+    public void onResume(){
+    	super.onResume();
+    	myLocation.trackLocation(this, locationResult);
+    }
+
     
     private void Login(){
         new AlertDialog.Builder(this)
@@ -69,5 +131,13 @@ public class MobilemileagetrackerActivity extends Activity {
 			}
 		}
 	}
+    
+    public boolean isTracking(){
+    	return tracking;
+    }
+    
+    public void setTracking(boolean arg){
+    	tracking = arg;
+    }
     
 }

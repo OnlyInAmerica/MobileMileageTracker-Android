@@ -7,6 +7,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.widget.Toast;
 
 //	Thanks, Fedor!
 public class MyLocation {
@@ -16,7 +17,7 @@ public class MyLocation {
     boolean gps_enabled=false;
     boolean network_enabled=false;
 
-    public boolean getLocation(Context context, LocationResult result)
+    public boolean trackLocation(Context context, LocationResult result)
     {
         //I use LocationResult callback class to pass location value from MyLocation to user code.
         locationResult=result;
@@ -35,17 +36,31 @@ public class MyLocation {
             lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListenerGps);
         if(network_enabled)
             lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListenerNetwork);
-        timer1=new Timer();
-        timer1.schedule(new GetLastLocation(), 20000);
+        //timer1=new Timer();
+        //timer1.schedule(new GetLastLocation(), 20000);
         return true;
+    }
+    
+    public boolean stopTracking(){
+    	int fail = 0;
+    	try{lm.removeUpdates(locationListenerGps);}catch(Exception e){fail +=1;}
+    	
+    	try{lm.removeUpdates(locationListenerNetwork);}catch(Exception e){fail +=1;}
+    	
+    	if(fail==0)
+    		return true;
+    	else
+    		return false;
     }
 
     LocationListener locationListenerGps = new LocationListener() {
         public void onLocationChanged(Location location) {
-            timer1.cancel();
+        	System.out.println("LOCATION GOT");
+            //timer1.cancel();
             locationResult.gotLocation(location);
-            lm.removeUpdates(this);
+            //lm.removeUpdates(this);
             lm.removeUpdates(locationListenerNetwork);
+            //As soon as GPS is available, fuck network location.
         }
         public void onProviderDisabled(String provider) {}
         public void onProviderEnabled(String provider) {}
@@ -54,10 +69,10 @@ public class MyLocation {
 
     LocationListener locationListenerNetwork = new LocationListener() {
         public void onLocationChanged(Location location) {
-            timer1.cancel();
+            //timer1.cancel();
             locationResult.gotLocation(location);
             lm.removeUpdates(this);
-            lm.removeUpdates(locationListenerGps);
+            //lm.removeUpdates(locationListenerGps);
         }
         public void onProviderDisabled(String provider) {}
         public void onProviderEnabled(String provider) {}

@@ -10,4 +10,20 @@
     android:layout_height="wrap_content" 
     android:text="@string/hello"
     />
+<Button
+    android:layout_marginTop="140dip" 
+    android:text="Begin New Trip" 
+    android:layout_height="wrap_content" 
+    android:id="@+id/createTripButton" 
+    android:layout_gravity="center_horizontal" 
+    android:layout_width="150dp">
+</Button>
+<Button
+    android:layout_marginTop="10dip" 
+    android:text="Continue Past Trip" 
+    android:layout_height="wrap_content" 
+    android:id="@+id/loadTripButton" 
+    android:layout_gravity="center_horizontal" 
+    android:layout_width="150dp">
+</Button>
 </LinearLayout>

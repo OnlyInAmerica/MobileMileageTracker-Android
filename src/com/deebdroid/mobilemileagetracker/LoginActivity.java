@@ -1,5 +1,10 @@
 package com.deebdroid.mobilemileagetracker;
 
+import org.json.JSONObject;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -11,6 +16,8 @@ import android.widget.Button;
 import android.widget.EditText;
 
 public class LoginActivity extends Activity{
+	
+	//TODO: Let user input persist until Login pressed
 	
 	private Context c;
 	
@@ -47,8 +54,7 @@ public class LoginActivity extends Activity{
 	            .show();
 			}
 			else{
-				response = restTest.get(MobilemileagetrackerActivity.SITE_URL, "device/", "dbro", "pw", 8000);
-				if(response != null){
+				if(checkRegisterDevice(username, password)){
 					Intent data = new Intent();
 					data.putExtra("username", username);
 					data.putExtra("password", password);
@@ -64,4 +70,35 @@ public class LoginActivity extends Activity{
 			}
 		}
 	};
+	
+	//Acts as user authenticator and device checker/registerer
+	protected boolean checkRegisterDevice(String user, String pw) {
+		String devices = restTest.get(MobilemileagetrackerActivity.SITE_URL, "device/", user, pw, MobilemileagetrackerActivity.SITE_PORT);
+		GsonBuilder gsonb = new GsonBuilder();
+		Gson gson = gsonb.create();
+		 
+		JSONObject j;
+		DeviceResponse rDevices = null; 
+		try{
+		    j = new JSONObject(devices);
+		    rDevices = gson.fromJson(j.toString(), DeviceResponse.class);
+		}
+		catch(Exception e){return false;}
+		
+		Device[] rDevicesList = rDevices.getDevices();
+		Device myDevice = null;
+		String myuuid = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+		//TODO: check no devices for user behavior
+		for(int x=0;x<rDevicesList.length;x++){
+			if(rDevicesList[x].uuid.equals(myuuid))
+				myDevice = rDevicesList[x];
+		}
+		
+		if(myDevice == null){
+			//If the current device is not registered for this user, create it
+			
+		}
+		
+		return true;
+	}
 }
