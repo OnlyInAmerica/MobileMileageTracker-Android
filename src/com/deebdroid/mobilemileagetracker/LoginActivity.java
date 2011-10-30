@@ -7,8 +7,10 @@ import com.google.gson.GsonBuilder;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -20,6 +22,9 @@ public class LoginActivity extends Activity{
 	//TODO: Let user input persist until Login pressed
 	
 	private Context c;
+	private ProgressDialog pd;
+	private String username;
+	private String password; 
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -44,8 +49,8 @@ public class LoginActivity extends Activity{
 			EditText usernameField = (EditText)findViewById(R.id.usernameField);
 			EditText passwordField = (EditText)findViewById(R.id.passwordField);
 			
-			String username = String.valueOf(usernameField.getText());
-			String password = String.valueOf(passwordField.getText());
+			username = String.valueOf(usernameField.getText());
+			password = String.valueOf(passwordField.getText());
 			
 			if(username.equals("") || password.equals("")){
 				new AlertDialog.Builder(c)
@@ -54,41 +59,30 @@ public class LoginActivity extends Activity{
 	            .show();
 			}
 			else{
-				if(checkRegisterDevice(username, password)){
-					Intent data = new Intent();
-					data.putExtra("username", username);
-					data.putExtra("password", password);
-					setResult(RESULT_OK, data);
-					finish();
-				}
-				else{
-					new AlertDialog.Builder(c)
-		        	.setMessage("Login Failed")
-		            .setPositiveButton("Ok", null)
-		            .show();
-				}
+				//Create a new thread for network stuff
+				pd = ProgressDialog.show(c, "Logging in...", "Beep Boop-Boop Bobba Doop",true,false);
+				new LoginTask().execute(username, password);
+				
 			}
 		}
 	};
 	
-	//Acts as user authenticator and device checker/registerer
-	protected boolean checkRegisterDevice(String user, String pw) {
+		//Authenticate user and register this Device if necessary
+		protected boolean checkRegisterDevice(String user, String pw) {
 		String devices = restTest.get(MobilemileagetrackerActivity.SITE_URL, "device/", user, pw, MobilemileagetrackerActivity.SITE_PORT);
 		GsonBuilder gsonb = new GsonBuilder();
 		Gson gson = gsonb.create();
-		 
-		JSONObject j;
-		DeviceResponse rDevices = null; 
+		DeviceResponse rDevices = null;
+		
 		try{
-		    j = new JSONObject(devices);
-		    rDevices = gson.fromJson(j.toString(), DeviceResponse.class);
+		    rDevices = gson.fromJson(devices, DeviceResponse.class);
 		}
 		catch(Exception e){return false;}
 		
 		Device[] rDevicesList = rDevices.getDevices();
 		Device myDevice = null;
 		String myuuid = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-		//TODO: check no devices for user behavior
+		
 		for(int x=0;x<rDevicesList.length;x++){
 			if(rDevicesList[x].uuid.equals(myuuid))
 				myDevice = rDevicesList[x];
@@ -96,9 +90,38 @@ public class LoginActivity extends Activity{
 		
 		if(myDevice == null){
 			//If the current device is not registered for this user, create it
-			
+			restTest.post(MobilemileagetrackerActivity.SITE_URL, "device/", "{\"device_type\": \"Android\", \"name\": \""+user+" Phone\", \"uuid\": \""+myuuid+"\"}" ,user, pw, MobilemileagetrackerActivity.SITE_PORT);			
 		}
 		
 		return true;
+	}
+		
+	private class LoginTask extends AsyncTask<String, Void, Boolean>{
+		//Executed in new thread
+		@Override
+		protected Boolean doInBackground(String... params) {
+			return (Boolean)checkRegisterDevice(params[0],params[1]);
+		}
+		
+		//Executed in UI thread
+		protected void onPostExecute(Boolean didLogin){
+			//
+			pd.dismiss();
+			
+			if(didLogin == true){
+				Intent data = new Intent();
+				data.putExtra("username", username);
+				data.putExtra("password", password);
+				setResult(RESULT_OK, data);
+				finish();
+			}
+			else{
+				new AlertDialog.Builder(c)
+	        	.setMessage("Login Failed")
+	            .setPositiveButton("Ok", null)
+	            .show();
+			}
+		}
+
 	}
 }

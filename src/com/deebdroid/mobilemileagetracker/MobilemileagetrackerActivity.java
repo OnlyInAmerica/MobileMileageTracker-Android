@@ -1,6 +1,8 @@
 package com.deebdroid.mobilemileagetracker;
 
 import com.deebdroid.mobilemileagetracker.MyLocation.LocationResult;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -17,7 +19,7 @@ import android.widget.Toast;
 
 public class MobilemileagetrackerActivity extends Activity {
 	
-	public static final String SITE_URL = "10.0.1.7.";
+	public static final String SITE_URL = "192.168.1.4";
 	public static final int SITE_PORT = 8000;
 	private static final String PREFS = "Credentials";	//For local prefs storage
 	private static final int LOGIN_REQ_CODE = 0;		//For exchanging login data from LoginActivity
@@ -29,6 +31,8 @@ public class MobilemileagetrackerActivity extends Activity {
 	
 	private SharedPreferences prefs;
 	private SharedPreferences.Editor editor;
+	
+	//TODO: Remove tracking and related methods. Instead create a second constructor for MyLocation
 		
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,31 +43,35 @@ public class MobilemileagetrackerActivity extends Activity {
         //Set this true once a trip is started
         //The location tracking Activity will then receive updates
         tracking = false;
-        setupLocationReceiver();
+        
+        //Uncomment below to 'warm up' gps on app launch
+        //setupLocationReceiver();
              
         prefs = getSharedPreferences(PREFS, 0);
         editor = prefs.edit();
-        
-        
+        Login();
+        /*
         if(prefs.getBoolean("first_launch", true))
         	Login();
         else{
         	TextView tv = (TextView)findViewById(R.id.textView);
         	tv.setText("Hello " + prefs.getString("username", "You")+"!");
         }
+        */
+
         
         //TODO: Create/Set Trip Create/Continue trip button listeners, pass locationResult data to TrackActivity
     }
-    
+        
     private OnClickListener createTripListener = new OnClickListener(){
     	
     	public void onClick(View arg){
-    		Intent i = new Intent(c, TrackActivity.class);
-    		startActivityForResult(i, LOGIN_REQ_CODE);
+    		//Intent i = new Intent(c, TrackActivity.class);
+    		//startActivityForResult(i, LOGIN_REQ_CODE);
     	}
     };
     
-    
+    /*	Going to relocate data tracking to TrackActivity
     private void setupLocationReceiver(){
     	locationResult = new LocationResult(){
             @Override
@@ -71,7 +79,13 @@ public class MobilemileagetrackerActivity extends Activity {
             	double acc = location.getAccuracy()/3.2808399;
             	Toast.makeText(c, "loc +/ "+String.valueOf(acc)+"ft.",Toast.LENGTH_SHORT).show();
                 if(tracking){
-                	//Write logic to send location to Trip recorder Activity thing
+                	/*
+                	 * Was originally thinking I'd pass location data in an Intent. but this probably won't work once this activity is paused and 
+                	 * Track activity is active.
+                	Intent i = new Intent(getApplicationContext(), TrackActivity.class);
+                	i.putExtra(key, value);
+                	startActivity(i);
+                	
                 }
             }
     	};
@@ -79,28 +93,7 @@ public class MobilemileagetrackerActivity extends Activity {
         myLocation = new MyLocation();
         myLocation.trackLocation(this, locationResult);
     }
-    
-    public void onPause(){
-    	super.onPause();
-    	if(tracking == false)
-    		myLocation.stopTracking();
-    }
-    
-    public void onStop(){
-    	super.onStop();
-    	if(tracking == false)
-    		myLocation.stopTracking();
-    }
-    
-    public void onStart(){
-    	super.onStart();
-    	myLocation.trackLocation(this, locationResult);
-    }
-    
-    public void onResume(){
-    	super.onResume();
-    	myLocation.trackLocation(this, locationResult);
-    }
+   */
 
     
     private void Login(){

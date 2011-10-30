@@ -12,6 +12,12 @@ public class Device {
 		user = "";
 		uuid = "";
 	}
+	public Device(String Name, String Dt, String User, String Uuid){
+		name = Name;
+		device_type= Dt;
+		user = User;
+		uuid = Uuid;
+	}
 	
 	public void setName(String name){this.name = name;}
 	public void setDevice_Type(String device_type){this.device_type = device_type;}
