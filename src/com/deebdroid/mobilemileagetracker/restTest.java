@@ -25,6 +25,8 @@ import android.os.Bundle;
 import android.util.Log;
 
 public class restTest {
+	//TODO: Make this a singleton class that is initialized once with SITE_URL, PORT, username, password, device_uri
+	// This will clean things up quite a bit.
 	
 	static final String MY_APP_TAG = "com.deebdroid.mobilemileagetracker";
 	static final String API_URI = "/api/v1/";

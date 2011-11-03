@@ -25,6 +25,7 @@ public class LoginActivity extends Activity{
 	private ProgressDialog pd;
 	private String username;
 	private String password; 
+	private String device_uri;
 	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -42,15 +43,15 @@ public class LoginActivity extends Activity{
 	
 	private OnClickListener loginListener = new OnClickListener() {
 		
-		@Override
+		
 		public void onClick(View arg0) {
 			String response = null;
 			
 			EditText usernameField = (EditText)findViewById(R.id.usernameField);
 			EditText passwordField = (EditText)findViewById(R.id.passwordField);
 			
-			username = String.valueOf(usernameField.getText());
-			password = String.valueOf(passwordField.getText());
+			username = String.valueOf(usernameField.getText()).trim();
+			password = String.valueOf(passwordField.getText()).trim();
 			
 			if(username.equals("") || password.equals("")){
 				new AlertDialog.Builder(c)
@@ -73,11 +74,10 @@ public class LoginActivity extends Activity{
 		GsonBuilder gsonb = new GsonBuilder();
 		Gson gson = gsonb.create();
 		DeviceResponse rDevices = null;
-		
-		try{
-		    rDevices = gson.fromJson(devices, DeviceResponse.class);
-		}
-		catch(Exception e){return false;}
+	
+		if((rDevices = gson.fromJson(devices, DeviceResponse.class)) == null)
+			return false;	// Login credentials were invalid. If user was valid, but had no devices, 
+							// a valid but empty DeviceResponse will be returned
 		
 		Device[] rDevicesList = rDevices.getDevices();
 		Device myDevice = null;
@@ -87,11 +87,26 @@ public class LoginActivity extends Activity{
 			if(rDevicesList[x].uuid.equals(myuuid))
 				myDevice = rDevicesList[x];
 		}
-		
+			
 		if(myDevice == null){
 			//If the current device is not registered for this user, create it
 			restTest.post(MobilemileagetrackerActivity.SITE_URL, "device/", "{\"device_type\": \"Android\", \"name\": \""+user+" Phone\", \"uuid\": \""+myuuid+"\"}" ,user, pw, MobilemileagetrackerActivity.SITE_PORT);			
+			
+			//Get the ID of the newly created device.
+			//TODO: Instead of repeated retrieve all user devices -> find this one, Modify the API to return created device's unique ID.
+			devices = restTest.get(MobilemileagetrackerActivity.SITE_URL, "device/", user, pw, MobilemileagetrackerActivity.SITE_PORT);
+			rDevices = null;
+			
+			rDevices = gson.fromJson(devices, DeviceResponse.class);
+			rDevicesList = rDevices.getDevices();
+			
+			for(int x=0;x<rDevicesList.length;x++){
+				if(rDevicesList[x].uuid.equals(myuuid))
+					device_uri = rDevicesList[x].resource_uri;
+			}
 		}
+		else
+			device_uri = myDevice.resource_uri;
 		
 		return true;
 	}
@@ -112,6 +127,7 @@ public class LoginActivity extends Activity{
 				Intent data = new Intent();
 				data.putExtra("username", username);
 				data.putExtra("password", password);
+				data.putExtra("device_uri", device_uri);
 				setResult(RESULT_OK, data);
 				finish();
 			}

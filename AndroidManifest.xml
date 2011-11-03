@@ -22,6 +22,9 @@
         <activity android:name=".LoginActivity"
                   android:label="@string/app_name">
         </activity>
+        <activity android:name=".TrackActivity"
+                  android:label="@string/app_name">
+        </activity>
 
     </application>
 </manifest>
